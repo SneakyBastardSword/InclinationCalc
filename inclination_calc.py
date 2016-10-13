@@ -62,7 +62,6 @@ bodyValues = {
     'kerbol': [int(1.1723328 * 10 ** 18), int(261600000), int(10 ** 12)],
     'sun': [int(1.1723328 * 10 ** 18), int(261600000), int(10 ** 12)]
 }
-
 #^ I dedicate this dictionary in the name of the elif block of agony and despair, which it replaced
 
 #get orbital parameters from inputs
