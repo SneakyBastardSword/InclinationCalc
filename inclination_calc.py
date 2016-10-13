@@ -30,6 +30,8 @@ getcontext().prec = 10
 def Orb_Vel(NodeHeight, SemiMajorAxis, LocalGrav):
 	return math.sqrt(LocalGrav * (2 / nodeHeight - 1 / semiMajorAxis))
 
+
+
 #Semi Major Axis calculation:
 def SMA_From_Orb_Vel (NodeHeight, OrbVel, LocalGrav):
 	return -1 / (OrbVel ** 2 / LocalGrav - 2 / NodeHeight)
@@ -40,19 +42,22 @@ def Ecc_From_Ap_Pe(Apoapsis, Periapsis):
 
 #set up a class for orbits
 class ORBIT = (object):
-    def __init__(self, SMA, ECC, INC, LPE, LAN, MNA):
+    def __init__(self, SMA, ECC, INC, APE, LAN, TNA):
         #all __init__ definitions are the defining values for the orbit 
         self.SMA = SMA  #Semi Major Axis
         self.ECC = ECC  #Eccentricity
-        self.INC = INC  #Inclinations
-        self.LPE = LPE  #Longitude of Periapsis
+        self.INC = INC  #Inclination
+        self.APE = APE  #Argument of Periapsis
         self.LAN = LAN  #Longitude of Ascending Node
-        self.MNA = MNA  #Mean Anomaly
+        self.TNA = TNA  #True Anomaly
+        
+        self.period = (2 * math.pi) * math.sqrt((SMA ** 3) / gravConstant)
+        self.meanMotion = 360 / self.period
     
     #calculate DV required for changing the orbit's plane by a given amount
-    def Plane_Change_Delta_V(AngleChange, PeriapsisArgument, TrueAnomaly, MeanMotion):	
-	    numerator = 2 * math.sin(AngleChange / 2) * math.sqrt(1 - self.ECC ** 2) * math.cos(PeriapsisArgument + TrueAnomaly) * MeanMotion * self.SMA 
-	    return numerator / (1 + self.ECC * math.cos(TrueAnomaly)) 
+    def Plane_Change_Delta_V(AngleChange):	
+	    numerator = 2 * math.sin(AngleChange / 2) * math.sqrt(1 - self.ECC ** 2) * math.degrees(math.cos(self.APE + self.TNA)) * self.meanMotion * self.SMA 
+	    return numerator / (1 + self.ECC * math.degrees(math.cos(self.TNA))) 
         #^that equation was horrendous. if you have a question, ask wikipedia. its under orbital inclination change or something.
 
 #dictionary for values associated with the planetary bodies:
@@ -80,17 +85,14 @@ bodyValues = {
 #^ I dedicate this dictionary in the name of the elif block of agony and despair, which it replaced
 
 #get orbital parameters from inputs
-apHeight = Decimal(input("Apoapsis height(Km)? "))				
-peHeight = Decimal(input("Periapsis height(Km)? "))
+apHeight = float(input("Apoapsis height(Km)? "))				
+peHeight = float(input("Periapsis height(Km)? "))
 
-#only ask for nodeHeight if it is needed
-if apHeight == peHeight:
-    nodeHeight = apHeight
-else:
-	nodeHeight = Decimal(input("Altitude at ascending node(Km)? "))
-
-currentInc = int(input("Current inclination? "))
+#TODO: either find a way to do simpler inputs (unlikely) or read params directly from a .sfs
+initInc = int(input("Current inclination? "))
 finalInc = int(input("Desired inclination? "))
+peArg = float(input("Argument of Periapsis? "))
+anLong = float(input("longitude of ascending node? "))
 maxApPref = str(input("Avoid possible intercepts with moons? (y/n) (defaults to n if invalid or null) ")).lower
 
 #change maxSafeAp lookup if the user specifies yes for maxApPref
@@ -115,31 +117,38 @@ while localSystem == "0":
 		localRadius = bodyValues[localSystem][1]
 		maxSafeAp = bodyValues[localSystem][2]
 
-print("Input accepted. Calculating...")	
-
-#create variables needed for passing to the ORBIT class
-apHeightAdjusted = apHeight + localRadius
-peHeightAdjusted = peHeight + localRadius
+#create variables needed for defining orbit
+initApHeightAdjusted = apHeight + localRadius
+initPeHeightAdjusted = peHeight + localRadius
 initSMA = (apHeightAdjusted + peHeightAdjusted) / 2
+
+#assign orbital parameters that are simpler to caclulate for circular orbuts
+if apHeight == peHeight:
+    print("Input accepted. Calculating...")
+    nodeHeight = initApHeightAdjusted
+    initECC = 0
+    initTNA = 360 - peArg    	
+else:
+	nodeHeight = float(input("Altitude at ascending node(Km)? ")) + localRadius
+    print("Input accepted. Calculating...")
+    
+    initECC = Ecc_From_Ap_Pe()
+
+     #decide wether to use An or Dn for manuvers by which one > semi minor axis 
+    initTNA = math.degrees(math.acos((initSMA - (initSMA * initECC ** 2) - nodeHeight) / (nodeHeight * initECC)))
+    if nodeHeight < (initSMA * math.sqrt(1 - initECC ** 2):
+        initTNA = math.fabs(initTNA - 180)
 
 #initialize class defining the initial orbit:
 initialOrbit = ORBIT(
-    ((apHeightAdjusted + peHeightAdjusted) / 2), #SMA
-    
+    initSMA,        #SMA
+    initECC,        #ECC
+    initInc,        #INC
+    peArg,          #APE
+    0,              #LAN    Since LAN is based on an arbitrary reference direction, we can set it = 0 
+    initTNA         #TNA
+)
 
-#Finish this part once sketchy math is figured out:
-#while (apHeightTotal < maxSafeAp):				#aforementioned while loop from hell. Finds the cheapest possible bi-eliptic plane change maneuver.
-#	orbVelBiEliptic = orbVelBiEliptic + 50
-#	biElipticChangeSMA = Semi_Major_Axis(nodeHeightTotal, orbVelBiEliptic, gravConstant)
-#	apHeightTotal = 
-#	
-#	
-#if directChangeDeltaV < biElipticDeltaV:			#outputs appropriate maneuver + delta V readout
-#	print("Use a bi-elliptic plane change maneuver.")
-#	print("The maneuver will take ", biElipticDeltaV, "m/s")
-#
-#else:
-#	print("Use a basic plane change maneuver.")
-#	print("The maneuver will take ", directChangeDeltaV, "m/s")
+#TODO: calculate best bi-eliptic plane change DV once sketchy math is figured out:
 
-print ("Maneuver DV is " + directChangeDeltaV + " m/s.")
+print ("Maneuver DV is " + initialOrbit.Plane_Change_Delta_V(math.fabs(finalInc - initInc)) + " m/s.")
