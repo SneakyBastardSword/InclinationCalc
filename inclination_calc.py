@@ -31,7 +31,7 @@ def Orb_Vel(NodeHeight, SemiMajorAxis, LocalGrav):
 	return math.sqrt(LocalGrav * (2 / nodeHeight - 1 / semiMajorAxis))
 
 #Semi Major Axis calculation:
-def Semi_Major_Axis (NodeHeight, OrbVel, LocalGrav):
+def SMA_From_Orb_Vel (NodeHeight, OrbVel, LocalGrav):
 	return -1 / (OrbVel ** 2 / LocalGrav - 2 / NodeHeight)
 
 #Eccentricity calculation
@@ -40,20 +40,19 @@ def Ecc_From_Ap_Pe(Apoapsis, Periapsis):
 
 #set up a class for orbits
 class ORBIT = (object):
-    def __init__(self, SMA, ECC, INC, LPE, LAN, MNA, EPH, REF):
+    def __init__(self, SMA, ECC, INC, LPE, LAN, MNA):
         #all __init__ definitions are the defining values for the orbit 
         self.SMA = SMA  #Semi Major Axis
         self.ECC = ECC  #Eccentricity
         self.INC = INC  #Inclinations
         self.LPE = LPE  #Longitude of Periapsis
         self.LAN = LAN  #Longitude of Ascending Node
-        self.MNA = MNA  #Mean Anomaly (?)
-        self.EPH = EPH  #TODO: find out what this is
-        self.REF = REF  #TODO: find out what this is
+        self.MNA = MNA  #Mean Anomaly
     
-    def Plane_Change_Delta_V(AngleChange, Eccentricity, PeriapsisArgument, TrueAnomaly, MeanMotion, SMajorAxis):	
-	    numerator = 2 * math.sin(AngleChange / 2) * math.sqrt(1 - Eccentricity ** 2) * math.cos(PeriapsisArgument + TrueAnomaly) * MeanMotion * SMajorAxis 
-	    return numerator / (1 + Eccentricity * math.cos(TrueAnomaly)) 
+    #calculate DV required for changing the orbit's plane by a given amount
+    def Plane_Change_Delta_V(AngleChange, PeriapsisArgument, TrueAnomaly, MeanMotion):	
+	    numerator = 2 * math.sin(AngleChange / 2) * math.sqrt(1 - self.ECC ** 2) * math.cos(PeriapsisArgument + TrueAnomaly) * MeanMotion * self.SMA 
+	    return numerator / (1 + self.ECC * math.cos(TrueAnomaly)) 
         #^that equation was horrendous. if you have a question, ask wikipedia. its under orbital inclination change or something.
 
 #dictionary for values associated with the planetary bodies:
@@ -81,13 +80,12 @@ bodyValues = {
 #^ I dedicate this dictionary in the name of the elif block of agony and despair, which it replaced
 
 #get orbital parameters from inputs
-#TODO: simplify so the user doesnt need to look at the save files to input vars (if possible)
 apHeight = Decimal(input("Apoapsis height(Km)? "))				
 peHeight = Decimal(input("Periapsis height(Km)? "))
 
 #only ask for nodeHeight if it is needed
 if apHeight == peHeight:
-	nodeHeight = apHeight
+    nodeHeight = apHeight
 else:
 	nodeHeight = Decimal(input("Altitude at ascending node(Km)? "))
 
@@ -119,9 +117,15 @@ while localSystem == "0":
 
 print("Input accepted. Calculating...")	
 
+#create variables needed for passing to the ORBIT class
+apHeightAdjusted = apHeight + localRadius
+peHeightAdjusted = peHeight + localRadius
+initSMA = (apHeightAdjusted + peHeightAdjusted) / 2
+
 #initialize class defining the initial orbit:
-
-
+initialOrbit = ORBIT(
+    ((apHeightAdjusted + peHeightAdjusted) / 2), #SMA
+    
 
 #Finish this part once sketchy math is figured out:
 #while (apHeightTotal < maxSafeAp):				#aforementioned while loop from hell. Finds the cheapest possible bi-eliptic plane change maneuver.
@@ -138,4 +142,4 @@ print("Input accepted. Calculating...")
 #	print("Use a basic plane change maneuver.")
 #	print("The maneuver will take ", directChangeDeltaV, "m/s")
 
-print ("Maneuver DV is ", directChangeDeltaV, " m/s.")
+print ("Maneuver DV is " + directChangeDeltaV + " m/s.")
