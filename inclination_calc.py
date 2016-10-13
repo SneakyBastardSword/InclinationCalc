@@ -22,7 +22,7 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-import math
+import math #TODO: replace all instances of floats with the Decimal type once basic functionality is established
 from decimal import *
 getcontext().prec = 10
 
@@ -30,15 +30,13 @@ getcontext().prec = 10
 def Orb_Vel(NodeHeight, SemiMajorAxis, LocalGrav):
 	return math.sqrt(LocalGrav * (2 / nodeHeight - 1 / semiMajorAxis))
 
-
-
 #Semi Major Axis calculation:
 def SMA_From_Orb_Vel (NodeHeight, OrbVel, LocalGrav):
 	return -1 / (OrbVel ** 2 / LocalGrav - 2 / NodeHeight)
 
 #Eccentricity calculation
 def Ecc_From_Ap_Pe(Apoapsis, Periapsis):
-    return (Apoapsis - Periapsis) / ((Apoapsis + Periapsis) / 2)
+    return (Apoapsis - Periapsis) / (Apoapsis + Periapsis)
 
 #set up a class for orbits
 class ORBIT = (object):
@@ -59,6 +57,9 @@ class ORBIT = (object):
 	    numerator = 2 * math.sin(AngleChange / 2) * math.sqrt(1 - self.ECC ** 2) * math.degrees(math.cos(self.APE + self.TNA)) * self.meanMotion * self.SMA 
 	    return numerator / (1 + self.ECC * math.degrees(math.cos(self.TNA))) 
         #^that equation was horrendous. if you have a question, ask wikipedia. its under orbital inclination change or something.
+    
+    #return orbital params
+    def Pass_Params
 
 #dictionary for values associated with the planetary bodies:
 bodyValues = {
@@ -85,8 +86,8 @@ bodyValues = {
 #^ I dedicate this dictionary in the name of the elif block of agony and despair, which it replaced
 
 #get orbital parameters from inputs
-apHeight = float(input("Apoapsis height(Km)? "))				
-peHeight = float(input("Periapsis height(Km)? "))
+apHeight = float(input("Apoapsis height(Km)? ") * 1000)				
+peHeight = float(input("Periapsis height(Km)? ") * 1000)
 
 #TODO: either find a way to do simpler inputs (unlikely) or read params directly from a .sfs
 initInc = int(input("Current inclination? "))
@@ -134,12 +135,12 @@ else:
     
     initECC = Ecc_From_Ap_Pe()
 
-     #decide wether to use An or Dn for manuvers by which one > semi minor axis 
+    #decide wether to use An or Dn for manuvers by which one > semi minor axis 
     initTNA = math.degrees(math.acos((initSMA - (initSMA * initECC ** 2) - nodeHeight) / (nodeHeight * initECC)))
     if nodeHeight < (initSMA * math.sqrt(1 - initECC ** 2):
         initTNA = math.fabs(initTNA - 180)
 
-#initialize class defining the initial orbit:
+#initialize orbit class instance defining the initial orbit:
 initialOrbit = ORBIT(
     initSMA,        #SMA
     initECC,        #ECC
@@ -150,5 +151,11 @@ initialOrbit = ORBIT(
 )
 
 #TODO: calculate best bi-eliptic plane change DV once sketchy math is figured out:
+
+#initiate orbit class instance whose values are iterated to find bi-eliptic plane change values
+workingOrbit = ORBIT(
+
+)
+
 
 print ("Maneuver DV is " + initialOrbit.Plane_Change_Delta_V(math.fabs(finalInc - initInc)) + " m/s.")
