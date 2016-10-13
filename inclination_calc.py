@@ -1,5 +1,5 @@
 #KSP Inclination Maneuver Calculator
-#Edited 10/11/2016
+#Edited 10/13/2016
 #The MIT License (MIT)
 
 #Copyright (c) 2015-2016 Ethan Wilton 
@@ -34,11 +34,27 @@ def Orb_Vel(NodeHeight, SemiMajorAxis, LocalGrav):
 def Semi_Major_Axis (NodeHeight, OrbVel, LocalGrav):
 	return -1 / (OrbVel ** 2 / LocalGrav - 2 / NodeHeight)
 
-#caculate DV of a plane change maneuver:	
-def Inclination_Change_Delta_V (AngleChange, Eccentricity, PeriapsisArgument, TrueAnomaly, MeanMotion, SMajorAxis):	
-	numerator = 2 * math.sin(AngleChange / 2) * math.sqrt(1 - Eccentricity ** 2) * math.cos(PeriapsisArgument + TrueAnomaly) * MeanMotion * SMajorAxis 
-	return numerator / (1 + Eccentricity * math.cos(TrueAnomaly)) 
-    #that equation was horrendous. if you have a question, ask wikipedia. its under orbital inclination change or something.
+#Eccentricity calculation
+def Ecc_From_Ap_Pe(Apoapsis, Periapsis):
+    return (Apoapsis - Periapsis) / ((Apoapsis + Periapsis) / 2)
+
+#set up a class for orbits
+class ORBIT = (object):
+    def __init__(self, SMA, ECC, INC, LPE, LAN, MNA, EPH, REF):
+        #all __init__ definitions are the defining values for the orbit 
+        self.SMA = SMA  #Semi Major Axis
+        self.ECC = ECC  #Eccentricity
+        self.INC = INC  #Inclinations
+        self.LPE = LPE  #Longitude of Periapsis
+        self.LAN = LAN  #Longitude of Ascending Node
+        self.MNA = MNA  #Mean Anomaly (?)
+        self.EPH = EPH  #TODO: find out what this is
+        self.REF = REF  #TODO: find out what this is
+    
+    def Plane_Change_Delta_V(AngleChange, Eccentricity, PeriapsisArgument, TrueAnomaly, MeanMotion, SMajorAxis):	
+	    numerator = 2 * math.sin(AngleChange / 2) * math.sqrt(1 - Eccentricity ** 2) * math.cos(PeriapsisArgument + TrueAnomaly) * MeanMotion * SMajorAxis 
+	    return numerator / (1 + Eccentricity * math.cos(TrueAnomaly)) 
+        #^that equation was horrendous. if you have a question, ask wikipedia. its under orbital inclination change or something.
 
 #dictionary for values associated with the planetary bodies:
 bodyValues = {
@@ -94,8 +110,7 @@ while localSystem == "0":
 	#first check if the user's input was valid
 	if localSystem not in bodyValues:
 		print("Error: Not a valid body in KSP")
-		localSystem = str("0")
-	
+		localSystem = str("0")	
 	#actually assign the values (only runs if intput body is valid)
 	else:
 		gravConstant = bodyValues[localSystem][0]
@@ -104,39 +119,7 @@ while localSystem == "0":
 
 print("Input accepted. Calculating...")	
 
-#initialize some important variables:
-
-#change ap/pe height to actual radius from center for accurate mathing. also converting from km to m is probably important
-apHeightTotal = (apHeight * 1000) + localRadius		
-peHeightTotal = (peHeight * 1000) + localRadius
-
-#various prbital params
-eccentricity = Decimal((apHeightTotal - peHeightTotal) / (apHeightTotal + peHeightTotal))
-incDifference  = math.fabs(finalInc - currentInc)
-semiMajorAxis = ((2 * localRadius) + peHeightTotal + apHeightTotal) / 2			
-nodeHeightTotal = localRadius + nodeHeight
-peAngle = 0
-anAngle = math.acos((nodeHeightTotal + semiMajorAxis - (semiMajorAxis * eccentricity ** 2)) / peHeight * eccentricity)	
-#clarification: anAngle is angle of ascending node
-dnAngle = math.fabs(anAngle - math.pi)
-argumentOfPeriapsis = math.fabs(peAngle - anAngle)
-orbitalPeriod = 2 * math.pi * math.sqrt(semiMajorAxis ** 3 / gravConstant)
-meanMotion = (2 * math.pi) / orbitalPeriod
-
-#prevents anAngle calculation from throwing /0 errors in the case of circular orbits    
-if eccentricity != 0: 
-    anAngle = math.acos((nodeHeightTotal + semiMajorAxis - (semiMajorAxis * eccentricity ** 2)) / peHeight * eccentricity)
-else: 
-    anAngle = 0
-
-#convert to radians because math
-currentInc = math.radians(currentInc)						
-finalInc = math.radians(finalInc)
-incDifference = math.radians(incDifference)
-
-#calculate more orbital params using functions defined above
-orbVelInitial = Orb_Vel(nodeHeightTotal, semiMajorAxis, gravConstant)		
-directChangeDeltaV = Inclination_Change_Delta_V(incDifference, eccentricity, argumentOfPeriapsis, anAngle, meanMotion, semiMajorAxis)
+#initialize class defining the initial orbit:
 
 
 
