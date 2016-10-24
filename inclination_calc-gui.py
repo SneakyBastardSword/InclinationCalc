@@ -26,11 +26,11 @@
 
 #A WORD ABOUT THIS BRANCH:
 
-#One night, my sleep-deprived, ADHD ass decided it would be a really cool and fun idea to make a GUI for this program. Later I realized that was a really shitty idea, especially considering the program wouldn't execute to completon due to errors at that point in development. 
+#One night, my sleep-deprived, ADHD ass decided it would be a really cool and fun idea to make a GUI for this program. Later I realized that was actually a really shitty idea, considering the program wouldn't execute to completion due to errors at that point in development. 
 
 #As such, development of this branch is hereby suspended until the base program does what it's supposed to without crashing. This will probably take quite a while (read: I probably wont get back to developing this branch for at least a year or so). 
 
-#If you really want a GUI version of this that badly, I suppose you could fork this branch and develop it yourself, but I wont be providing any help.
+#If you really want a GUI version of this that badly, I suppose you could fork the dev or master branch and develop it yourself, but I wont be providing any help.
 
 #==================================================================================================================================
 
